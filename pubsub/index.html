@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PubSub</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha256-xWeRKjzyg6bep9D1AsHzUPEWHbWMzlRc84Z0aG+tyms= sha512-mGIRU0bcPaVjr7BceESkC37zD6sEccxE+RJyQABbbKNe83Y68+PyPM5nrE1zvbQZkSHDCJEtnAcodbhlq2/EkQ=="
+          crossorigin="anonymous">
+</head>
+<body>
+    <div class="m-a-2">
+        <div class="row">
+            <div class="col-sm-4 col-sm-offset-4">
+                <button id="js-button-feed" class="btn btn-block btn-primary">Load news feed</button>
+            </div>
+        </div>
+
+        <h3>Feed (<span id="js-counter">0</span>)</h3>
+        <div id="js-feed">
+            <div class="alert alert-info">
+                Nothing to report.
+            </div>
+        </div>
+
+        <button id="js-button-counter" class="btn btn-primary hidden-xs-up">Add to counter</button>
+    </div>
+
+    <script>
+        var PubSub = (function () {
+            var channels = {};
+
+            /**
+             * Subscribe to a channel
+             *
+             * @param {string} channel
+             * @param {function} event
+             */
+            var subscribe = function (channel, event) {
+                channels[channel] = channels[channel] || [];
+                channels[channel].push(event || function () {});
+            };
+
+            /**
+             * Unsubscribe from a channel
+             *
+             * @param {string} channel
+             * @param {function} event
+             */
+            var unsubscribe = function (channel, event) {
+                channels[channel] = channels[channel] || [];
+
+                var index = channels[channel].indexOf(event);
+                if (index !== -1) {
+                    channels[channel].splice(index, 1);
+                }
+            };
+
+            /**
+             * Publish all events subscribed to a channel
+             *
+             * @param {string} channel
+             * @param message
+             */
+            var publish = function (channel, message) {
+                if (!channels[channel] || channels[channel].length < 1) {
+                    return;
+                }
+
+                channels[channel].forEach(function (event) {
+                    event(message || {});
+                });
+            };
+
+            return {
+                subscribe: subscribe,
+                unsubscribe: unsubscribe,
+                publish: publish,
+            }
+        })();
+    </script>
+    <script>
+        var button_feed = document.getElementById('js-button-feed');
+        var button_counter = document.getElementById('js-button-counter');
+
+        button_feed.addEventListener('click', function() {
+            PubSub.publish('feed.requested', 'Feed requested by button')
+        });
+
+        button_counter.addEventListener('click', function() {
+            PubSub.publish('counter.button.clicked');
+        });
+
+        PubSub.subscribe('feed.requested', function(message) {
+            console.log('feed requested');
+            console.log(message);
+        });
+
+        PubSub.subscribe('feed.requested', function(message) {
+            var feed = document.getElementById('js-feed');
+            feed.innerHTML = 'Feed loaded successfully! ';
+            feed.innerHTML += message;
+            PubSub.publish('feed.loaded');
+        });
+
+        PubSub.subscribe('feed.loaded', function() {
+            button_feed.parentNode.removeChild(button_feed);
+        });
+
+        PubSub.subscribe('counter.button.clicked', incrementCounter);
+        PubSub.subscribe('feed.loaded', incrementCounter);
+
+        PubSub.subscribe('feed.loaded', function() {
+            button_counter.classList.remove('hidden-xs-up')
+        });
+
+        function incrementCounter() {
+            var counter = document.getElementById('js-counter');
+            counter.innerHTML = 1 + parseFloat(counter.innerHTML);
+        }
+
+    </script>
+    <script>
+        /**
+         * Log to console on page load.
+         * Should only log once, due to unsubscribe.
+         */
+        var log = function (message) {
+            console.log(message);
+        };
+
+        PubSub.subscribe('page.loaded', log);
+        PubSub.publish('page.loaded', 'Page loaded');
+
+        PubSub.unsubscribe('page.loaded', log);
+        PubSub.publish('page.loaded', 'Should not be logged');
+    </script>
+</body>
+</html>
