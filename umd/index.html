@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UMD</title>
+</head>
+<body>
+    <div id="test"></div>
+
+    <script src="robot.js"></script>
+    <script>
+        var ferguson = new Robot('#test');
+        ferguson.name ='Ferguson';
+        console.log(ferguson);
+        console.log(ferguson.name);
+
+        ferguson.speak();
+        ferguson.speak();
+        ferguson.sum(5, 6);
+        ferguson.build();
+
+        var lucy = new Robot('#test', {
+            colour: 'green'
+        });
+        lucy.name = 'Lucy';
+        console.log(lucy);
+        console.log(lucy.name);
+        lucy.speak();
+        ferguson.speak();
+        lucy.build();
+
+        var kath = new Robot('#test');
+        kath.name = 'Kath';
+        console.log(kath);
+        kath.build();
+    </script>
+</body>
+</html>
